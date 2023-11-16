@@ -291,6 +291,7 @@ const TaskPage: React.FC = () => {
                 Authorization: `Bearer ${JSON.parse(user as string)?.token}`
             }
         }).then(() => {
+            alert("Задача завершена. Все подписи проверены!")
             navigate(0)
         })
     }
@@ -303,6 +304,7 @@ const TaskPage: React.FC = () => {
                 file_in_byte: atob(res.data.file_in_byte),
                 id
             }))
+            alert("Вы приняли задание. Все предыдущие подписи проверены!")
             navigate("/documents")
             navigate(0)
         })

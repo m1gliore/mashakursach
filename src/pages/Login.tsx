@@ -103,8 +103,8 @@ const Login: React.FC = () => {
             <Wrapper>
                 <Title>Войти в учётную запись</Title>
                 <Form onSubmit={handleSubmit(handleLogin)}>
-                    <Input type="text" {...register("username")} placeholder="Имя пользователя"/>
-                    <Input type="password" {...register("password")} placeholder="Пароль"/>
+                    <Input type="text" {...register("username")} required placeholder="Имя пользователя"/>
+                    <Input type="password" {...register("password")} required placeholder="Пароль"/>
                     <Button>Войти</Button>
                     <Registration to="/signup">Зарегистрироваться</Registration>
                 </Form>

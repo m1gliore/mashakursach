@@ -23,8 +23,8 @@ const App: React.FC = () => {
     const [user,] = useLocalStorage<string>("user")
 
     useEffect(() => {
-        if (user) {
-            const decodedToken = jwtDecode(JSON.parse(user).token) as DecodedToken
+        if (user !== "") {
+            const decodedToken = jwtDecode(JSON.parse(user as string).token) as DecodedToken
             setAdmin(decodedToken.isAdmin)
         }
     }, [user])

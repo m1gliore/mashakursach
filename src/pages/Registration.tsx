@@ -115,8 +115,8 @@ const Registration: React.FC = () => {
                     <Input type="text" {...register("surname")} required placeholder="Фамилия"/>
                     <Input type="text" {...register("name")} required placeholder="Имя"/>
                     <Input type="text" {...register("patronymic")} required placeholder="Отчество"/>
-                    <Input type="password" {...register("password")} required placeholder="Пароль"/>
-                    <Input type="password" {...register("repeatPassword")} required placeholder="Повторите пароль"/>
+                    <Input type="password" {...register("password")} required minLength={8} placeholder="Пароль"/>
+                    <Input type="password" {...register("repeatPassword")} required minLength={8} placeholder="Повторите пароль"/>
                     <Button>Создать</Button>
                     <Login to="/signin">Войти</Login>
                 </Form>

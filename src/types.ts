@@ -41,6 +41,6 @@ export interface CustomTooltipProps extends TooltipProps<any, any> {
 }
 
 export type Notification = {
-    idSequentialTaskNodeNew: number
+    idNotification: number
     taskMessage: string
 }

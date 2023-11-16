@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from "styled-components";
 import {NotificationsOutlined} from "@mui/icons-material";
 import {Link} from "react-router-dom";
@@ -70,51 +70,59 @@ const Header: React.FC = () => {
     const id = open ? 'simple-popover' : undefined
 
     useEffect(() => {
-        if (user) {
-            const decodedToken = jwtDecode(JSON.parse(user).token) as DecodedToken
+        if (user !== "") {
+            const decodedToken = jwtDecode(JSON.parse(user as string).token) as DecodedToken
             setAdmin(decodedToken.isAdmin)
         }
     }, [user])
 
-    const handleNotificationsClick = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-        // @ts-ignore
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleNotificationsClose = () => {
-        setAnchorEl(null)
-    }
+    const checkForUpdates = useCallback(async () => {
+        await axios.get(`http://localhost:8080/api/notifications/get_notification_by_user/${JSON.parse(user as string).id}`)
+            .then(res => {
+                if (res.status !== 200) {
+                    throw new Error('Network response was not ok')
+                }
+                return res
+            })
+            .then(res => {
+                setNotifications(res.data)
+                setTimeout(checkForUpdates, 2000)
+            })
+            .catch(err => {
+                alert(`There was a problem with the fetch operation: ${err}`)
+                setTimeout(checkForUpdates, 2000)
+            })
+    }, [user])
 
     useEffect(() => {
         if (user !== "") {
-            const checkForUpdates = async () => {
-                await axios.get(`http://localhost:8080/api/notifications/get_notification_by_user/${JSON.parse(user as string).id}`)
-                    .then(res => {
-                        if (res.status !== 200) {
-                            throw new Error('Network response was not ok')
-                        }
-                        return res
-                    })
-                    .then(res => {
-                        setNotifications(res.data)
-                        setTimeout(checkForUpdates, 5000)
-                    })
-                    .catch(err => {
-                        alert(`There was a problem with the fetch operation: ${err}`)
-                        setTimeout(checkForUpdates, 5000)
-                    })
-            }
             checkForUpdates()
         }
-    }, [user])
+    }, [user, checkForUpdates])
+
+    const handleNotificationsClick = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+        // @ts-ignore
+        setAnchorEl(event.currentTarget)
+    }
+
+    const handleNotificationsClose = async (id?: number) => {
+        setAnchorEl(null)
+        if (id) {
+            await axios.delete(`http://localhost:8080/api/notifications/delete_notification/${id}`)
+                .then(() => {
+                    checkForUpdates()
+                })
+        }
+    }
 
     return (
         <Wrapper>
             <Logo to="/">MashaCo.</Logo>
             <Nav>
-                {user !== "" && <Badge style={{marginRight: "1.5vw"}} badgeContent={notifications.length} color="secondary">
-                    <Notifications onClick={handleNotificationsClick}/>
-                </Badge>}
+                {user !== "" &&
+                    <Badge style={{marginRight: "1.5vw"}} badgeContent={notifications.length} color="secondary">
+                        <Notifications onClick={handleNotificationsClick}/>
+                    </Badge>}
                 <NavItem to="/home">Главная</NavItem>
                 {user !== "" && <NavItem to="/documents">Документы</NavItem>}
                 {user !== "" && <NavItem to="/tasks">Задачи</NavItem>}
@@ -131,7 +139,7 @@ const Header: React.FC = () => {
                 id={id}
                 open={open}
                 anchorEl={anchorEl}
-                onClose={handleNotificationsClose}
+                onClose={() => handleNotificationsClose()}
                 anchorOrigin={{
                     vertical: 'bottom',
                     horizontal: 'right',
@@ -146,7 +154,8 @@ const Header: React.FC = () => {
                         if (notification.taskMessage === "NEW_NODE_TASK") {
                             return (
                                 <ListItem key={index}>
-                                    <NavItem style={{color: "black"}} to="/tasks" onClick={handleNotificationsClose}>
+                                    <NavItem style={{color: "black"}} to="/tasks"
+                                             onClick={() => handleNotificationsClose(notification.idNotification)}>
                                         <ListItemText primary="У вас новое задание"/>
                                     </NavItem>
                                 </ListItem>
@@ -154,7 +163,8 @@ const Header: React.FC = () => {
                         } else if (notification.taskMessage === "DO_NODE_TASK") {
                             return (
                                 <ListItem key={index}>
-                                    <NavItem style={{color: "black"}} to="/tasks" onClick={handleNotificationsClose}>
+                                    <NavItem style={{color: "black"}} to="/tasks"
+                                             onClick={() => handleNotificationsClose(notification.idNotification)}>
                                         <ListItemText primary="У вас есть невыполненное задание"/>
                                     </NavItem>
                                 </ListItem>
@@ -162,7 +172,8 @@ const Header: React.FC = () => {
                         } else if (notification.taskMessage === "DO_TASK") {
                             return (
                                 <ListItem key={index}>
-                                    <NavItem style={{color: "black"}} to="/tasks" onClick={handleNotificationsClose}>
+                                    <NavItem style={{color: "black"}} to="/tasks"
+                                             onClick={() => handleNotificationsClose(notification.idNotification)}>
                                         <ListItemText primary="У вас есть невыполненное задание"/>
                                     </NavItem>
                                 </ListItem>
@@ -170,7 +181,8 @@ const Header: React.FC = () => {
                         } else if (notification.taskMessage === "FINISH_TASK") {
                             return (
                                 <ListItem key={index}>
-                                    <NavItem style={{color: "black"}} to="/tasks" onClick={handleNotificationsClose}>
+                                    <NavItem style={{color: "black"}} to="/tasks"
+                                             onClick={() => handleNotificationsClose(notification.idNotification)}>
                                         <ListItemText primary="Задание было завершено"/>
                                     </NavItem>
                                 </ListItem>

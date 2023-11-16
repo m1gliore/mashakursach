@@ -5,7 +5,14 @@ import "react-quill/dist/quill.snow.css"
 import Modal from "../components/Modal";
 import axios from "axios";
 import {useLocalStorage} from "react-use";
-import {AddOutlined, EditOutlined, SettingsOutlined} from "@mui/icons-material";
+import {
+    AddOutlined,
+    ArchiveOutlined,
+    ArticleOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    SettingsOutlined
+} from "@mui/icons-material";
 import {useNavigate} from "react-router-dom";
 import {FieldValues, SubmitHandler, useForm} from "react-hook-form";
 import {DecodedToken, Document} from "../types";
@@ -19,11 +26,27 @@ const Container = styled.div`
   background-color: rgb(255, 255, 255);
 `
 
+const Delete = styled(DeleteOutlined)`
+  cursor: pointer;
+  margin-right: .5vw;
+`
+
 const Edit = styled(EditOutlined)`
   cursor: pointer;
+  margin-right: .5vw;
 `
 
 const Add = styled(AddOutlined)`
+  cursor: pointer;
+  margin-right: .5vw;
+`
+
+const Docs = styled(ArticleOutlined)`
+  cursor: pointer;
+  margin-right: .5vw;
+`
+
+const ArchDocs = styled(ArchiveOutlined)`
   cursor: pointer;
   margin-right: .5vw;
 `
@@ -176,6 +199,8 @@ const DocumentPage: React.FC = () => {
     const [settingsVisibility, setSettingsVisibility] = useState<boolean>(false)
     const [admin, setAdmin] = useState<boolean>(false)
     const [user,] = useLocalStorage<string>("user")
+    const [archievedDocs, setArchievedDocs] = useState<Array<Document>>([])
+    const [currentDocumentState, setCurrentDocumentState] = useState<string>("docs")
 
     useEffect(() => {
         if (user) {
@@ -188,6 +213,10 @@ const DocumentPage: React.FC = () => {
         (async () => {
             admin && await axios.get('http://localhost:8080/api/documents/getAll_documents')
                 .then((res) => setDocuments(res.data))
+            admin && await axios.get('http://localhost:8080/api/documents/getAll_documents_archive')
+                .then((res) => {
+                    setArchievedDocs(res.data)
+                })
         })()
     }, [admin])
 
@@ -271,6 +300,19 @@ const DocumentPage: React.FC = () => {
         }
     }
 
+    const deleteDocument: SubmitHandler<FieldValues> = async (data) => {
+        try {
+            await axios.delete(`http://localhost:8080/api/documents/deleteDocumentBy/${data.documentDelete}`, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${JSON.parse(user as string)?.token}`
+                }
+            }).then(() => navigate(0))
+        } catch (error) {
+            alert(error)
+        }
+    }
+
     const downloadFile = (base64Data: string, fileName: string) => {
         const decodedData = atob(base64Data)
         const byteNumbers = new Array(decodedData.length)
@@ -302,9 +344,26 @@ const DocumentPage: React.FC = () => {
                         setSelectedFileName('')
                         setCurrentWindow("update")
                     }}/>
+                    <Delete style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
+                        setModalActive(true)
+                        setSelectedFileName('')
+                        setCurrentWindow("delete")
+                    }}/>
+                    <Docs style={{display: settingsVisibility && currentDocumentState !== "docs" ? "block" : "none"}} fontSize="large" onClick={() => {
+                        setCurrentDocumentState("docs")
+                    }}/>
+                    <ArchDocs style={{display: settingsVisibility && currentDocumentState !== "archive" ? "block" : "none"}} fontSize="large" onClick={() => {
+                        setCurrentDocumentState("archive")
+                    }}/>
                 </SettingsContainer>
             }
             <Main>
+                {admin &&
+                    <>
+                        <Title style={{display: currentDocumentState === "archive" ? "block" : "none"}}>Архив</Title>
+                        <Title style={{display: currentDocumentState === "docs" ? "block" : "none"}}>Документы</Title>
+                    </>
+                }
                 {!admin &&
                     <>
                         <Title>Текущий документ</Title>
@@ -322,13 +381,25 @@ const DocumentPage: React.FC = () => {
                                     <TableCell align="center">Документ</TableCell>
                                 </TableRow>
                             </TableHead>
-                            <TableBody>
+                            <TableBody style={{display: currentDocumentState === "archive" ? "block" : "none"}}>
+                                {archievedDocs.map((document, index) => (
+                                    <TableRow key={index}
+                                              sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                                              style={{cursor: "pointer"}}
+                                              onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
+                                        <TableCell sx={{width: 450}} align="center" component="th" scope="row">
+                                            {document.fileName}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                            <TableBody style={{display: currentDocumentState === "docs" ? "block" : "none"}}>
                                 {documents.map((document, index) => (
                                     <TableRow key={index}
                                               sx={{'&:last-child td, &:last-child th': {border: 0}}}
                                               style={{cursor: "pointer"}}
                                               onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
-                                        <TableCell align="center" component="th" scope="row">
+                                        <TableCell sx={{width: 450}} align="center" component="th" scope="row">
                                             {document.fileName}
                                         </TableCell>
                                     </TableRow>
@@ -365,6 +436,18 @@ const DocumentPage: React.FC = () => {
                             <InputFileButton>Выберите файл</InputFileButton>
                         </InputFile>
                         <Button type="submit">Изменить</Button>
+                    </Form>
+                </ModalContainer>
+                <ModalContainer style={{display: currentWindow !== "delete" ? "none" : "flex"}}>
+                    <Title>Удалить документ</Title>
+                    <Form onSubmit={handleSubmit(deleteDocument)}>
+                        <Select {...register("documentDelete")}>
+                            <option value="">Выберите документ</option>
+                            {documents?.map((document, index) => (
+                                <option key={index} value={document.idDocument}>{document.fileName}</option>
+                            ))}
+                        </Select>
+                        <Button type="submit">Удалить</Button>
                     </Form>
                 </ModalContainer>
             </Modal>
