@@ -44,3 +44,8 @@ export type Notification = {
     idNotification: number
     taskMessage: string
 }
+
+export interface TaskName {
+    employeeId: string
+    taskName: string
+}

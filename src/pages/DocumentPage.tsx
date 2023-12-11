@@ -17,7 +17,7 @@ import {useNavigate} from "react-router-dom";
 import {FieldValues, SubmitHandler, useForm} from "react-hook-form";
 import {DecodedToken, Document} from "../types";
 import jwtDecode from "jwt-decode";
-import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
+import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip} from "@mui/material";
 
 const Container = styled.div`
   position: relative;
@@ -334,27 +334,42 @@ const DocumentPage: React.FC = () => {
                 <SettingsContainer onMouseOver={() => setSettingsVisibility(true)}
                                    onMouseOut={() => setSettingsVisibility(false)}>
                     <Settings style={{display: settingsVisibility ? "none" : "block"}} fontSize="large"/>
-                    <Add style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setSelectedFileName('')
-                        setCurrentWindow("create")
-                    }}/>
-                    <Edit style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setSelectedFileName('')
-                        setCurrentWindow("update")
-                    }}/>
-                    <Delete style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setSelectedFileName('')
-                        setCurrentWindow("delete")
-                    }}/>
-                    <Docs style={{display: settingsVisibility && currentDocumentState !== "docs" ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setCurrentDocumentState("docs")
-                    }}/>
-                    <ArchDocs style={{display: settingsVisibility && currentDocumentState !== "archive" ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setCurrentDocumentState("archive")
-                    }}/>
+                    <Tooltip title="Добавить документ" placement="bottom">
+                        <Add style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
+                            setModalActive(true)
+                            setSelectedFileName('')
+                            setCurrentWindow("create")
+                        }}/>
+                    </Tooltip>
+                    <Tooltip title="Изменить документ" placement="bottom">
+                        <Edit style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
+                            setModalActive(true)
+                            setSelectedFileName('')
+                            setCurrentWindow("update")
+                        }}/>
+                    </Tooltip>
+                    <Tooltip title="Удалить документ" placement="bottom">
+                        <Delete style={{display: settingsVisibility ? "block" : "none"}} fontSize="large"
+                                onClick={() => {
+                                    setModalActive(true)
+                                    setSelectedFileName('')
+                                    setCurrentWindow("delete")
+                                }}/>
+                    </Tooltip>
+                    <Tooltip title="Документы" placement="bottom">
+                        <Docs
+                            style={{display: settingsVisibility && currentDocumentState !== "docs" ? "block" : "none"}}
+                            fontSize="large" onClick={() => {
+                            setCurrentDocumentState("docs")
+                        }}/>
+                    </Tooltip>
+                    <Tooltip title="Архив" placement="bottom">
+                        <ArchDocs
+                            style={{display: settingsVisibility && currentDocumentState !== "archive" ? "block" : "none"}}
+                            fontSize="large" onClick={() => {
+                            setCurrentDocumentState("archive")
+                        }}/>
+                    </Tooltip>
                 </SettingsContainer>
             }
             <Main>
@@ -374,39 +389,56 @@ const DocumentPage: React.FC = () => {
                     </>
                 }
                 {admin &&
-                    <TableContainer style={{marginTop: "5vw"}} sx={{width: 450}} component={Paper}>
-                        <Table sx={{width: 450}} aria-label="simple table">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align="center">Документ</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody style={{display: currentDocumentState === "archive" ? "block" : "none"}}>
-                                {archievedDocs.map((document, index) => (
-                                    <TableRow key={index}
-                                              sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                                              style={{cursor: "pointer"}}
-                                              onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
-                                        <TableCell sx={{width: 450}} align="center" component="th" scope="row">
-                                            {document.fileName}
-                                        </TableCell>
+                    <>
+                        <TableContainer
+                            style={{marginTop: "5vw", display: currentDocumentState === "docs" ? "block" : "none"}}
+                            component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Номер</TableCell>
+                                        <TableCell>Документ</TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                            <TableBody style={{display: currentDocumentState === "docs" ? "block" : "none"}}>
-                                {documents.map((document, index) => (
-                                    <TableRow key={index}
-                                              sx={{'&:last-child td, &:last-child th': {border: 0}}}
-                                              style={{cursor: "pointer"}}
-                                              onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
-                                        <TableCell sx={{width: 450}} align="center" component="th" scope="row">
-                                            {document.fileName}
-                                        </TableCell>
+                                </TableHead>
+                                <TableBody>
+                                    {documents.map((document, index) => (
+                                        <TableRow key={index}
+                                                  style={{cursor: "pointer"}}
+                                                  onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                {document.fileName}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TableContainer
+                            style={{marginTop: "5vw", display: currentDocumentState === "archive" ? "block" : "none"}}
+                            component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Номер</TableCell>
+                                        <TableCell>Документ</TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                </TableHead>
+                                <TableBody>
+                                    {archievedDocs.map((document, index) => (
+                                        <TableRow key={index}
+                                                  style={{cursor: "pointer"}}
+                                                  onClick={() => downloadFile(document.file_in_byte, document.fileName)}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                {document.fileName}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </>
                 }
             </Main>
             <Modal active={modalActive} setActive={setModalActive}>

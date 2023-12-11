@@ -4,11 +4,11 @@ import Modal from "../components/Modal";
 import {FieldValues, SubmitHandler, useForm} from "react-hook-form";
 import axios from "axios";
 import {useNavigate} from 'react-router-dom';
-import {DecodedToken, Document, Employee, Task, TaskNode} from "../types";
+import {DecodedToken, Document, Employee, Task, TaskName, TaskNode} from "../types";
 import {useLocalStorage} from "react-use";
 import {AddOutlined, DeleteOutlined, EditOutlined, SettingsOutlined} from "@mui/icons-material";
 import jwtDecode from "jwt-decode";
-import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
+import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip} from "@mui/material";
 
 const Container = styled.div`
   position: relative;
@@ -167,6 +167,7 @@ const TaskPage: React.FC = () => {
     const [settingsVisibility, setSettingsVisibility] = useState<boolean>(false)
     const [admin, setAdmin] = useState<boolean>(false)
     const [user,] = useLocalStorage<string>("user")
+    const [taskNames, setTaskNames] = useState<Array<TaskName>>([])
 
     useEffect(() => {
 
@@ -194,6 +195,15 @@ const TaskPage: React.FC = () => {
     const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedValues = Array.from(event.target.selectedOptions, (option: HTMLOptionElement) => option.value)
         setSelectedOptions(selectedValues)
+
+        const initialTaskNames = selectedValues.map((employeeId) => ({employeeId, taskName: ''}))
+        setTaskNames(initialTaskNames)
+    }
+
+    const handleTaskNameChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+        const updatedTaskNames = [...taskNames]
+        updatedTaskNames[index].taskName = event.target.value
+        setTaskNames(updatedTaskNames)
     }
 
     const onChangeDocument = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -231,10 +241,13 @@ const TaskPage: React.FC = () => {
         formData.append("id_employee_creator", JSON.parse(user as string)?.id)
         // @ts-ignore
         formData.append("id_document", parseInt(data.document, 10))
+
+        const nodeNames = taskNames.map(task => task.taskName)
+
         // @ts-ignore
-        formData.append("node_name", data.node_name.split(','))
+        formData.append("node_name", nodeNames)
         // @ts-ignore
-        formData.append("name_desc", data.name_desc.split(','))
+        formData.append("name_desc", Array(selectedOptions.length).fill('mama'))
 
         await axios.post('http://localhost:8080/api/tasks/create', formData, {
             headers: {
@@ -316,18 +329,25 @@ const TaskPage: React.FC = () => {
                 <SettingsContainer onMouseOver={() => setSettingsVisibility(true)}
                                    onMouseOut={() => setSettingsVisibility(false)}>
                     <Settings style={{display: settingsVisibility ? "none" : "block"}} fontSize="large"/>
-                    <Add style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setCurrentWindow("create")
-                    }}/>
-                    <Edit style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setCurrentWindow("update")
-                    }}/>
-                    <Delete style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
-                        setModalActive(true)
-                        setCurrentWindow("delete")
-                    }}/>
+                    <Tooltip title="Добавить задачу" placement="bottom">
+                        <Add style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
+                            setModalActive(true)
+                            setCurrentWindow("create")
+                        }}/>
+                    </Tooltip>
+                    <Tooltip title="Изменить задачу" placement="bottom">
+                        <Edit style={{display: settingsVisibility ? "block" : "none"}} fontSize="large" onClick={() => {
+                            setModalActive(true)
+                            setCurrentWindow("update")
+                        }}/>
+                    </Tooltip>
+                    <Tooltip title="Удалить задачу" placement="bottom">
+                        <Delete style={{display: settingsVisibility ? "block" : "none"}} fontSize="large"
+                                onClick={() => {
+                                    setModalActive(true)
+                                    setCurrentWindow("delete")
+                                }}/>
+                    </Tooltip>
                 </SettingsContainer>
             }
             <Title>Ваши задачи</Title>
@@ -405,8 +425,15 @@ const TaskPage: React.FC = () => {
                             </Label>
                         </LeftFormContainer>
                         <RightFormContainer>
-                            <Input type="text" {...register("node_name")} placeholder="Названия подзадач"/>
-                            <Input type="text" {...register("name_desc")} placeholder="Описания подзадач"/>
+                            {taskNames.map((task, index) => (
+                                <Input
+                                    key={index}
+                                    type="text"
+                                    placeholder={`Название подзадачи для пользователя ${task.employeeId}`}
+                                    value={task.taskName}
+                                    onChange={(event) => handleTaskNameChange(index, event)}
+                                />
+                            ))}
                             <Label>
                                 <Select style={{width: "25vw"}} {...register("document")}>
                                     <option value="">Выберите документ</option>
