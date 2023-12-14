@@ -266,10 +266,13 @@ const TaskPage: React.FC = () => {
         formData.append("id_employee", selectedOptions.map(Number))
         // @ts-ignore
         formData.append("id_employee_creator", JSON.parse(user as string)?.id)
+
+        const nodeNames = taskNames.map(task => task.taskName)
+
         // @ts-ignore
-        formData.append("node_name", data.node_nameUpdate.split(','))
+        formData.append("node_name", nodeNames)
         // @ts-ignore
-        formData.append("name_desc", data.name_descUpdate.split(','))
+        formData.append("name_desc", Array(selectedOptions.length).fill('mama'))
 
         await axios.put('http://localhost:8080/api/tasks/update', formData, {
             headers: {
@@ -469,8 +472,15 @@ const TaskPage: React.FC = () => {
                             </Label>
                         </LeftFormContainer>
                         <RightFormContainer>
-                            <Input type="text" {...register("node_nameUpdate")} placeholder="Названия подзадач"/>
-                            <Input type="text" {...register("name_descUpdate")} placeholder="Описания подзадач"/>
+                            {taskNames.map((task, index) => (
+                                <Input
+                                    key={index}
+                                    type="text"
+                                    placeholder={`Название подзадачи для пользователя ${task.employeeId}`}
+                                    value={task.taskName}
+                                    onChange={(event) => handleTaskNameChange(index, event)}
+                                />
+                            ))}
                             <Button type="submit">Изменить</Button>
                         </RightFormContainer>
                     </Form>

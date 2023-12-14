@@ -64,7 +64,7 @@ const HomePage: React.FC = () => {
             <Main>
                 <MainHeader>Сделайте соглашения более приятными.</MainHeader>
                 <Text>Оптимизируйте и автоматизируйте рабочие процессы по заключению контрактов в вашем бизнесе с помощью нашего сайта.</Text>
-                <Image src={homePagePicture} alt="Изображения на главной (ЭЦП)"/>
+                <Image src={homePagePicture} alt="Изображения на главной"/>
                 <InfoContainer>
                     <InfoItem>
                         <BorderColorOutlined fontSize="large"/>
